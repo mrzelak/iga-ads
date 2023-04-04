@@ -10,7 +10,7 @@
 #include "ads/output_manager.hpp"
 #include "ads/simulation.hpp"
 
-const int iterations = 10000;
+const int iterations = 30000;
 namespace ads::problems {
 
 class heat_2d : public simulation_2d {
@@ -58,13 +58,13 @@ private:
         using std::swap;
         swap(u, u_prev);
         const double d = 0.7;
-        const double c = 10000;
+        const double c = 30000;
         s = std::max(((cos(iter * 3.14159265358979 / c) - d) * 1 / (1-d)), 0.);
         std::cout << "\r" << iter << "/" << iterations << " (s=" << s << ")                          \r";
     }
 
-    void step(int /*iter*/, double /*t*/) override {
-        compute_rhs();
+    void step(int /*iter*/, double t) override {
+        compute_rhs(t);
         solve(u);
     }
 
@@ -83,13 +83,18 @@ private:
         return e / 40;
     }
 
-    double dTy(double h) {
-      if (h >= 0.8) return 0;
-      return -5.2;
+    double dTy(double h, double t) {
+      if (t <= 0.12 && h < 0.5) return -5.2;
+      if (t <= 0.12 && h >= 0.6) return 5.2;
+      if (t <= 0.14) return 0.0;
+      int check = static_cast<int> (100.0 * t) - 15;
+      if(check % 2 == 1) return 5.2;
+      if(check % 2 == 0) return -5.2;
+      return 0.0;
     }
 
     const double k_x = 1.0, k_y = 0.1;
-    void compute_rhs() {
+    void compute_rhs(double t) {
         auto& rhs = u;
 
         zero(rhs);
@@ -103,7 +108,7 @@ private:
 
                     double gradient_prod = k_x * u.dx * v.dx + k_y * u.dy * v.dy;
                     double h = e2h(e[1]);
-                    double val = u.val * v.val - steps.dt * gradient_prod + steps.dt * dTy(h) * u.dy * v.val + steps.dt * f(h) * v.val;
+                    double val = u.val * v.val - steps.dt * gradient_prod + steps.dt * dTy(h, t) * u.dy * v.val + steps.dt * f(h) * v.val;
                     rhs(a[0], a[1]) += val * w * J;
                 }
             }
