@@ -68,6 +68,10 @@ add_example(pollution GALOIS
   SRC
   pollution/main.cpp)
 
+add_example(polution
+  SRC
+  pollution/polution.cpp)
+
 add_example(pollution_dpg GALOIS
   SRC
   pollution/dpg.cpp)
